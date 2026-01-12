@@ -28,13 +28,6 @@ jobs:
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
 
-      - name: Write secret files to workspace
-        run: |
-          echo "${{ secrets.SUNLIFE_JSON }}" > sunlifepoc-ce62b1e2d69c.json
-          echo "${{ secrets.ID_RSA }}" > id_rsa
-          chmod 600 id_rsa
-
-
       - name: Configure AWS for China ECR
         uses: aws-actions/configure-aws-credentials@v3
         with:
