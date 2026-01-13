@@ -24,7 +24,7 @@ jobs:
         id: set-vars
         run: |
           VERSION_TAG="${{ github.event.inputs.tag_version }}"
-          REPO_NAME=docscanner
+          REPO_NAME=test_repo
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
 
