@@ -12,12 +12,12 @@ jobs:
     steps:
       - name: Download script from URL
         run: |
-          curl -fsSL https://example.com/script.sh -o script.sh
-          chmod +x script.sh
+          curl -fsSL https://github.com/cefnmike/test_repo/blob/main/.github/workflows/check-remote-script.yml -o check-remote-script.yml
+          chmod +x check-remote-script.yml
 
       - name: Check script formatting and syntax
         run: |
-          bash -n script.sh
+          bash -n check-remote-script.yml
 
       - name: Run shellcheck (optional but recommended)
         uses: ludeeus/action-shellcheck@v2
