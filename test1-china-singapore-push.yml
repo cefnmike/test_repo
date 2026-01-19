@@ -1,0 +1,81 @@
+name: Push to China and Singapore ECRs
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_version:
+        description: "Enter Image Version (e.g., 1.21.1)"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build_and_push_job:
+    runs-on: ubuntu-22.04
+    name: Build and Push to China & Singapore ECR
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set Environment Variables
+        id: set-vars
+        run: |
+          VERSION_TAG="${{ github.event.inputs.tag_version }}"
+          REPO_NAME=test_repo
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_ENV
+
+      - name: Configure AWS for China ECR
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.CHINA_AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.CHINA_AWS_REGION }}
+
+      - name: Login to China ECR
+        id: login-china
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Create China ECR Repo (If Not Exists)
+        run: |
+          aws ecr describe-repositories --repository-names "$REPO_NAME" > /dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "$REPO_NAME"
+
+
+      - name: Configure AWS for Singapore ECR
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.SG_AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.SG_AWS_REGION }}
+
+      - name: Login to Singapore ECR
+        id: login-sg
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Create Singapore ECR Repo (If Not Exists)
+        run: |
+          aws ecr describe-repositories --repository-names "$REPO_NAME" > /dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "$REPO_NAME"
+
+
+      - name: Build and Push Image to Both ECRs in Parallel
+        run: |
+          CHINA_URI=${{ steps.login-china.outputs.registry }}/$REPO_NAME:$VERSION_TAG
+          SG_URI=${{ steps.login-sg.outputs.registry }}/$REPO_NAME:$VERSION_TAG
+
+          echo "Building Docker image..."
+          docker build -t $CHINA_URI .
+
+          echo "Tagging image for Singapore..."
+          docker tag $CHINA_URI $SG_URI
+
+          echo "Pushing to China and Singapore ECRs in parallel..."
+          docker push $CHINA_URI & 
+          docker push $SG_URI &     
+          wait                  
+          
+          echo "Docker images pushed to both ECRs successfully."
+          echo "China ECR URI: $CHINA_URI"
+          echo "Singapore ECR URI: $SG_URI"
