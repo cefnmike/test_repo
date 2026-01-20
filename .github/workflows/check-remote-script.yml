@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Download script from URL
         run: |
-          curl -fsSL https://github.com/cefnmike/test_repo/blob/main/.github/workflows/check-remote-script.yml -o check-remote-script.yml
+          curl -fsSL {{CODE_CHECK_FILE_URL}} -o check-remote-script.yml
           chmod +x check-remote-script.yml
 
       - name: Check script formatting and syntax
